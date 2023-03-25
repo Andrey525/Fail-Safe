@@ -2,7 +2,7 @@ version: '3.9'
 
 services:
   server:
-    build: ./server
+    build: .
     image: server
     container_name: server
     tty: true

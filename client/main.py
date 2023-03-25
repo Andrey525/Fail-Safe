@@ -1,4 +1,9 @@
+import sys
 import socket
+
+sys.path.insert(0, "/home/andrey/Рабочий стол/Institute/4_kurs/Fail-Safe/common")
+from enums import Action
+from enums import AuthStatus
 
 
 def main():
@@ -8,16 +13,11 @@ def main():
     sock.connect((host, port))
 
     action = ""
-    while (not action):
-        action = input("Enter action type (login or registration): ")
-
-
+    while (not action or not action in [act.value for act in Action]):
+        for act in Action:
+            print(f"For {act.name} enter '{act.value}';")
+        action = input(f"Enter command: ")
     sock.send(action.encode())
-    answer = sock.recv(1024).decode()
-    if (answer != "success"):
-        print(f"Server: operation failed, because {answer}")
-        sock.close()
-        return
 
     nickname = ""
     while (not nickname):
@@ -25,7 +25,8 @@ def main():
 
     sock.send(nickname.encode())
     answer = sock.recv(1024).decode()
-    if (answer != "success"):
+    if (action == Action.login.value and answer != AuthStatus.nickname_busy.value or
+        action == Action.registration.value and answer != AuthStatus.no_such_user.value):
         print(f"Server: operation failed, because {answer}")
         sock.close()
         return
