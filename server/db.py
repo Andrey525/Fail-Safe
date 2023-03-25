@@ -20,6 +20,16 @@ def connect():
     return connection
 
 
+def reset_all_statuses():
+    status = DBStatus.user_offline.value
+    query = "UPDATE users " + \
+            f"SET status = '{status}' "
+    with connect() as connection:
+        with connection.cursor() as curs:
+            curs.execute(query)
+            connection.commit()
+
+
 def update_status(nickname: str, status: str):
     query = "UPDATE users " + \
             f"SET status = '{status}' " + \
@@ -39,11 +49,11 @@ def registrate_new_user(nickname: str, password: str):
 
 
 def login(nickname: str):
-    update_status(nickname, status=DBStatus.user_online.name)
+    update_status(nickname, status=DBStatus.user_online.value)
 
 
 def logout(nickname: str):
-    update_status(nickname, status=DBStatus.user_offline.name)
+    update_status(nickname, status=DBStatus.user_offline.value)
 
 
 def correct_password(nickname: str, password: str) -> bool:
@@ -77,17 +87,15 @@ def user_is_already_playing(nickname: str) -> bool:
         with connection.cursor() as curs:
             curs.execute(query)
             status = curs.fetchone()
-
-    return status is not None and status[0] == DBStatus.user_online.name
+    return status is not None and status[0] == DBStatus.user_online.value
 
 
 def get_all_online_users() -> str:
     query = "SELECT nickname " + \
             "FROM users " + \
-            f"WHERE status = '{DBStatus.user_online.name}'"
+            f"WHERE status = '{DBStatus.user_online.value}'"
     with connect() as connection:
         with connection.cursor() as curs:
             curs.execute(query)
             online_users = curs.fetchall()
-
     return " ".join(online_users)

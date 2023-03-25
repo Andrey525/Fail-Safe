@@ -1,17 +1,30 @@
 import socket
 import threading
+import time
 import auth
+import room
+from enums import ConnectionStatus
+from db import reset_all_statuses
+
+game_room = room.Room(max_players_count=2)
 
 
 def handler(sock, address):
+    # костыль: нужно добавить пустого, чтоб при переполнении заблокировать новых игроков
+    game_room.add_player((None, None))
     # Регистрация либо вход в существующий аккаунт
     nickname = auth.authorize(sock)
     if (not nickname):
+        game_room.remove_player((None, None))
         sock.close()
         return
-
-    # Определяться в какой рум закидывать игрока
-    # 
+    # Добавляем
+    game_room.add_player((nickname, sock))
+    game_room.remove_player((None, None))
+    # Ждем пока не заполнится рум
+    while (not game_room.is_full()):
+        time.sleep(1)
+    print("Room is full! Can start game!")
 
     # сама игра
     try:
@@ -22,11 +35,13 @@ def handler(sock, address):
             sock.send("Hi".encode())
     except:
         auth.logout(nickname)
+        game_room.remove_player((nickname, sock))
         sock.close()
-        print("Exception")
+        print("Client was disconnected")
         return
     finally:
         auth.logout(nickname)
+        game_room.remove_player((nickname, sock))
         sock.close()
 
 
@@ -38,11 +53,16 @@ def main():
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
+    reset_all_statuses()
     while (True):
-        conn_sock, address = sock.accept()
-        print("Connection from: " + str(address))
-        thread = threading.Thread(target=handler, args=(conn_sock, address))
-        thread.start()
+        time.sleep(1)
+        if (not game_room.is_full()):
+            print("here")
+            conn_sock, address = sock.accept()
+            conn_sock.send(ConnectionStatus.connected.value.encode())
+            print("Connection from: " + str(address))
+            thread = threading.Thread(target=handler, args=(conn_sock, address))
+            thread.start()
     
 
 if __name__ == '__main__':

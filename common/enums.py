@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class ConnectionStatus(Enum):
+    connected = "connected"
+    disconnected = "disconnected"
+    conn_ref = "connection refused"
+
 class Action(Enum):
     login = "login"
     registration = "registration"
