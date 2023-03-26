@@ -1,17 +1,23 @@
+import socket
 import db
 from enums import Action
 from enums import AuthStatus
+from enums import PACKET_SEPARATOR
 
 
-def authorize(sock) -> str | None:
+def authorize(sock: socket) -> str | None:
     try:
-        action = sock.recv(1024).decode()
-        if (not action):
+        packet = sock.recv(1024).decode()
+        if (not packet):
             raise Exception("Connection is broken")
 
-        nickname = sock.recv(1024).decode()
-        if (not nickname):
-            raise Exception("Connection is broken")
+        entity = packet.split(PACKET_SEPARATOR)
+        action = entity[0]
+        nickname = entity[1]
+        password = entity[2]
+
+        if (not action or not nickname or not password):
+            raise Exception("Broken package")
 
         if (db.user_is_already_playing(nickname)):
             sock.send(AuthStatus.already_logged_in.value.encode())
@@ -20,10 +26,6 @@ def authorize(sock) -> str | None:
 
         if (action == Action.login.value):
             if (db.user_exist(nickname)):
-                sock.send(AuthStatus.nickname_busy.value.encode())
-                password = sock.recv(1024).decode()
-                if (not password):
-                    raise Exception("Connection is broken")
                 if (not db.correct_password(nickname, password)):
                     sock.send(AuthStatus.invalid_password.value.encode())
                     sock.close()
@@ -34,15 +36,12 @@ def authorize(sock) -> str | None:
                 return None
         elif (action == Action.registration.value):
             if (not db.user_exist(nickname)):
-                sock.send(AuthStatus.no_such_user.value.encode())
-                password = sock.recv(1024).decode()
-                if (not password):
-                    raise Exception("Connection is broken")
                 db.registrate_new_user(nickname, password)
             else:
                 sock.send(AuthStatus.nickname_busy.value.encode())
                 sock.close()
                 return None
+
     except Exception as e:
         sock.close()
         print(e)

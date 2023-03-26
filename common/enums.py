@@ -5,6 +5,7 @@ class ConnectionStatus(Enum):
     connected = "connected"
     disconnected = "disconnected"
     conn_ref = "connection refused"
+    server_full = "server is full"
 
 class Action(Enum):
     login = "login"
@@ -22,3 +23,6 @@ class AuthStatus(Enum):
 class DBStatus(Enum):
     user_offline = "user offline"
     user_online = "user online"
+
+
+PACKET_SEPARATOR = ";"
