@@ -46,14 +46,14 @@ def main():
     sock.listen(5)
     reset_all_statuses()
     while (True):
-            conn_sock, address = sock.accept()
-            print("Connection from: " + str(address))
-            if (not chat_room.is_full()):
-                thread = threading.Thread(target=handler, args=(conn_sock, address))
-                thread.start()
-            else:
-                conn_sock.send(", ".join([ConnectionStatus.conn_ref.value, ConnectionStatus.server_full.value]).encode())
-                conn_sock.close()
+        conn_sock, address = sock.accept()
+        print("Connection from: " + str(address))
+        if (not chat_room.is_full()):
+            thread = threading.Thread(target=handler, args=(conn_sock, address))
+            thread.start()
+        else:
+            conn_sock.send(", ".join([ConnectionStatus.conn_ref.value, ConnectionStatus.server_full.value]).encode())
+            conn_sock.close()
 
     
 if __name__ == '__main__':
