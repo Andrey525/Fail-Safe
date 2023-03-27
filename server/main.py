@@ -3,7 +3,7 @@ import threading
 import time
 import auth
 import room
-from enums import ConnectionStatus
+from enums import *
 from db import reset_all_statuses
 
 
@@ -15,7 +15,9 @@ def chat(nickname: str, sock: socket):
         data = sock.recv(1024).decode()
         if not data:
             break
-        chat_room.send_all(f"{nickname}: {data}".encode())
+        message = f"{nickname}: {data}"
+        chat_room.add_message(message)
+        chat_room.send_all(";".join([Action.new_message.value, message]).encode())
 
 
 def handler(sock, address):
@@ -27,6 +29,16 @@ def handler(sock, address):
 
     # Добавляем
     chat_room.add_user((nickname, sock))
+    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
+    # Отправляем новому пользователю список онлайн пользователей
+    chat_room.send_to_user_all_online_members(sock)
+    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
+    # Отправляем всем ник нового пользователя (включая самого пользователя)
+    chat_room.send_all(PACKET_SEPARATOR.join([Action.new_user.value, nickname]).encode())
+    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
+    # Отправляем новому пользователю список сообщений
+    chat_room.send_to_user_all_messages(sock)
+    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
 
     # переписка
     chat(nickname, sock)

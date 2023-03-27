@@ -10,6 +10,10 @@ class ConnectionStatus(Enum):
 class Action(Enum):
     login = "login"
     registration = "registration"
+    new_user = "new user"
+    new_message = "new message"
+    all_users = "all users"
+    all_messages = "all messages"
 
 
 class AuthStatus(Enum):
@@ -26,3 +30,4 @@ class DBStatus(Enum):
 
 
 PACKET_SEPARATOR = ";"
+PAYLOAD_SEPARATOR = "|"

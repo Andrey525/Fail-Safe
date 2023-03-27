@@ -11,7 +11,8 @@ def main():
     window = Tk()
     window.title("Chat client")
     window.geometry('1024x768')
-    start(window)
+    window.protocol("WM_DELETE_WINDOW", lambda: stop(window))
+    start_window(window)
     window.mainloop()
 
 
