@@ -2,6 +2,7 @@ import sys
 import socket
 import time
 import threading
+from cryptocode import encrypt
 from tkinter import *
 
 sys.path.insert(0, "/home/andrey/Рабочий стол/Institute/4_kurs/Fail-Safe/common")
@@ -39,6 +40,8 @@ def authorize(frame, data: tuple):
         sock.send(packet.encode())
         answer = sock.recv(1024).decode()
         if (answer != AuthStatus.success.value):
+            if (not answer):
+                answer = UNKNOWN_ERROR
             print(f"Server: operation failed, because {answer}")
             sock.close()
             start_window(window, answer)
@@ -71,20 +74,31 @@ def receiver(sock, text_boxes):
     while (not stop_event.is_set()):
         try:
             data = sock.recv(1024).decode()
+            if (not data):
+                print(f"Server: {UNKNOWN_ERROR}")
+                exit()
             action, payload = data.split(PACKET_SEPARATOR)
             match action:
                 case Action.new_user.value:
+                    users_textbox.configure(state=NORMAL)
                     users_textbox.insert(END, payload + '\n')
+                    users_textbox.configure(state=DISABLED)
                 case Action.new_message.value:
+                    chat_textbox.configure(state=NORMAL)
                     chat_textbox.insert(END, payload + '\n')
+                    chat_textbox.configure(state=DISABLED)
                 case Action.all_users.value:
                     nicknames = payload.split(PAYLOAD_SEPARATOR)
+                    users_textbox.configure(state=NORMAL)
                     for nickname in nicknames:
                         users_textbox.insert(END, nickname + '\n')
+                    users_textbox.configure(state=DISABLED)
                 case Action.all_messages.value:
                     messages = payload.split(PAYLOAD_SEPARATOR)
+                    chat_textbox.configure(state=NORMAL)
                     for message in messages:
                         chat_textbox.insert(END, message + '\n')
+                    chat_textbox.configure(state=DISABLED)
         except socket.timeout:
             continue
 
@@ -95,7 +109,7 @@ def chat_window(window, sock):
 
     lbl = Label(frame, text="Chat Room")
     lbl.grid(row=0)
-    chat_textbox = Text(frame)
+    chat_textbox = Text(frame, state=DISABLED)
     chat_textbox.grid(row=1)
     entry = Entry(frame)
     entry.grid(row=2)
@@ -103,7 +117,7 @@ def chat_window(window, sock):
     btn.grid(row=3)
     lbl_users = Label(frame, text="Online users")
     lbl_users.grid(row=4)
-    users_textbox = Text(frame, width=20)
+    users_textbox = Text(frame, width=20, state=DISABLED)
     users_textbox.grid(row=5)
 
     thread = threading.Thread(target=receiver, args=(sock, [chat_textbox, users_textbox]))
@@ -126,7 +140,7 @@ def login_window(old_frame, action):
     lbl_2.grid(row=2)
     entry_2 = Entry(frame, show="*")
     entry_2.grid(row=3)
-    btn = Button(frame, text="Confirm", command= lambda: authorize(frame, [action, entry_1.get(), entry_2.get()]))
+    btn = Button(frame, text="Confirm", command= lambda: authorize(frame, [action, entry_1.get(), encrypt(entry_2.get(), PASS_KEY)]))
     btn.grid(row=4)
 
     frame.mainloop()
@@ -138,9 +152,9 @@ def start_window(window, err: str=None):
 
     lbl = Label(frame, text="Choose action")
     lbl.grid(row=0)
-    btn_1 = Button(frame, text="Login", command= lambda: login_window(frame, "login"))
+    btn_1 = Button(frame, text="Login", command= lambda: login_window(frame, Action.login.value))
     btn_1.grid(row=1)
-    btn_2 = Button(frame, text="Registration", command= lambda: login_window(frame, "registration"))
+    btn_2 = Button(frame, text="Registration", command= lambda: login_window(frame, Action.registration.value))
     btn_2.grid(row=2)
 
     if (err):

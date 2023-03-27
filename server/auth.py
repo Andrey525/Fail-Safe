@@ -1,8 +1,7 @@
 import socket
 import db
-from enums import Action
-from enums import AuthStatus
-from enums import PACKET_SEPARATOR
+from cryptocode import decrypt
+from enums import *
 
 
 def authorize(sock: socket) -> str | None:
@@ -14,7 +13,8 @@ def authorize(sock: socket) -> str | None:
         entity = packet.split(PACKET_SEPARATOR)
         action = entity[0]
         nickname = entity[1]
-        password = entity[2]
+        password = decrypt(entity[2], PASS_KEY)
+        print(password)
 
         if (not action or not nickname or not password):
             raise Exception("Broken package")

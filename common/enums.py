@@ -31,3 +31,5 @@ class DBStatus(Enum):
 
 PACKET_SEPARATOR = ";"
 PAYLOAD_SEPARATOR = "|"
+PASS_KEY = "baobab"
+UNKNOWN_ERROR = "unknown error"

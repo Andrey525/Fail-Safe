@@ -4,11 +4,13 @@ from enums import *
 
 
 class Room:
+    __MAX_COUNT_LINES = 100
+    __message_list_file = "message_dump.txt"
+    __count_lines = 0
     def __init__(self, max_users_count):
         self.__lock = threading.Lock()
         self.__max_users_count = max_users_count
         self.__users = list()
-        self.__messages = list()
 
     def is_full(self):
         return self.get_users_count() >= self.__max_users_count
@@ -31,7 +33,16 @@ class Room:
 
     def add_message(self, message: str):
         self.__lock.acquire()
-        self.__messages.append(message)
+        if (self.__count_lines >= self.__MAX_COUNT_LINES):
+            with open(self.__message_list_file, "r+") as file:
+                messages = file.readlines()[50:]
+                file.truncate(0)
+                print(messages)
+                file.writelines(messages)
+                self.__count_lines = self.__MAX_COUNT_LINES - 50
+        with open(self.__message_list_file, "a+") as file:
+            file.write(message + '\n')
+            self.__count_lines += 1
         self.__lock.release()
 
     def send_all(self, data: bytes):
@@ -59,11 +70,17 @@ class Room:
         user_sock.send(data.encode())
 
     def send_to_user_all_messages(self, user_sock):
-        if (not self.__messages):
+        try:
+            with open(self.__message_list_file, "r") as file:
+                messages = file.read().split('\n')
+        except:
             return
 
+        if (not messages):
+            return
+        messages.pop()
         self.__lock.acquire()
-        data = PAYLOAD_SEPARATOR.join(self.__messages)
+        data = PAYLOAD_SEPARATOR.join(messages)
         self.__lock.release()
         data = Action.all_messages.value + PACKET_SEPARATOR + data
         user_sock.send(data.encode())
