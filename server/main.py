@@ -10,33 +10,24 @@ from db import reset_all_statuses
 chat_room = room.Room(max_users_count=2)
 
 
-def chat(nickname: str, sock: socket):
-    while True:
-        data = sock.recv(1024).decode()
-        if not data:
-            break
-        message = f"{nickname}: {data}"
-        chat_room.add_message_to_file(message)
-        chat_room.send_all(";".join([Action.new_message.value, message]).encode())
-
-
 def handler(sock, address):
     # Регистрация либо вход в существующий аккаунт
     nickname = auth.authorize(sock)
     if (not nickname):
         sock.close()
         return
-
     time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
+
     # Добавляем
-    chat_room.add_user((nickname, sock))
+    user = room.User((nickname, sock))
+    chat_room.add_user(user)
 
     # переписка
-    chat(nickname, sock)
+    chat_room.process_traffic(user)
 
     # выход
     auth.logout(nickname)
-    chat_room.remove_user((nickname, sock))
+    chat_room.remove_user(user)
     sock.close()
 
 

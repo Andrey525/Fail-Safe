@@ -16,6 +16,7 @@ timeout = 1
 def stop(window):
     global stop_event
     stop_event.set()
+    time.sleep(1)
     window.destroy()
 
 
@@ -74,9 +75,9 @@ def receiver(sock, text_boxes):
     while (not stop_event.is_set()):
         try:
             data = sock.recv(1024).decode()
-            if (not data):
+            if (not data ):
                 print(f"Server: {UNKNOWN_ERROR}")
-                exit()
+                break
             action, payload = data.split(PACKET_SEPARATOR)
             match action:
                 case Action.update_users.value:

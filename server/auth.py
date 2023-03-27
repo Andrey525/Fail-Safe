@@ -14,7 +14,6 @@ def authorize(sock: socket) -> str | None:
         action = entity[0]
         nickname = entity[1]
         password = decrypt(entity[2], PASS_KEY)
-        print(password)
 
         if (not action or not nickname or not password):
             raise Exception("Broken package")
@@ -57,7 +56,9 @@ def authorize(sock: socket) -> str | None:
         return None
 
     return nickname
-    
 
 def logout(nickname: str):
-    db.logout(nickname)
+    try:
+        db.logout(nickname)
+    except Exception as e:
+        print(e)
