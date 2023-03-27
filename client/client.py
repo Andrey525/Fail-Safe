@@ -79,20 +79,17 @@ def receiver(sock, text_boxes):
                 exit()
             action, payload = data.split(PACKET_SEPARATOR)
             match action:
-                case Action.new_user.value:
+                case Action.update_users.value:
+                    nicknames = payload.split(PAYLOAD_SEPARATOR)
                     users_textbox.configure(state=NORMAL)
-                    users_textbox.insert(END, payload + '\n')
+                    users_textbox.delete("1.0", END)
+                    for nickname in nicknames:
+                        users_textbox.insert(END, nickname + '\n')
                     users_textbox.configure(state=DISABLED)
                 case Action.new_message.value:
                     chat_textbox.configure(state=NORMAL)
                     chat_textbox.insert(END, payload + '\n')
                     chat_textbox.configure(state=DISABLED)
-                case Action.all_users.value:
-                    nicknames = payload.split(PAYLOAD_SEPARATOR)
-                    users_textbox.configure(state=NORMAL)
-                    for nickname in nicknames:
-                        users_textbox.insert(END, nickname + '\n')
-                    users_textbox.configure(state=DISABLED)
                 case Action.all_messages.value:
                     messages = payload.split(PAYLOAD_SEPARATOR)
                     chat_textbox.configure(state=NORMAL)

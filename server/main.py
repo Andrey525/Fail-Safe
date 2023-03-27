@@ -16,7 +16,7 @@ def chat(nickname: str, sock: socket):
         if not data:
             break
         message = f"{nickname}: {data}"
-        chat_room.add_message(message)
+        chat_room.add_message_to_file(message)
         chat_room.send_all(";".join([Action.new_message.value, message]).encode())
 
 
@@ -27,18 +27,9 @@ def handler(sock, address):
         sock.close()
         return
 
+    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
     # Добавляем
     chat_room.add_user((nickname, sock))
-    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
-    # Отправляем новому пользователю список онлайн пользователей
-    chat_room.send_to_user_all_online_members(sock)
-    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
-    # Отправляем всем ник нового пользователя (включая самого пользователя)
-    chat_room.send_all(PACKET_SEPARATOR.join([Action.new_user.value, nickname]).encode())
-    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
-    # Отправляем новому пользователю список сообщений
-    chat_room.send_to_user_all_messages(sock)
-    time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
 
     # переписка
     chat(nickname, sock)

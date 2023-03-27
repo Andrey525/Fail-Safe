@@ -10,9 +10,8 @@ class ConnectionStatus(Enum):
 class Action(Enum):
     login = "login"
     registration = "registration"
-    new_user = "new user"
+    update_users = "update users"
     new_message = "new message"
-    all_users = "all users"
     all_messages = "all messages"
 
 
