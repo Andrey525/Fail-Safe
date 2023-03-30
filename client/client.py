@@ -11,6 +11,7 @@ from enums import *
 
 stop_event = threading.Event()
 timeout = 1
+disconnected = False
 
 
 def stop(window):
@@ -58,6 +59,8 @@ def enter(frame, entry, sock):
     message = entry.get()
     entry.delete(0, END)
     try:
+        if (disconnected):
+            raise Exception("disconnected")
         if (message):
             sock.send(message.encode())
     except:
@@ -76,7 +79,9 @@ def receiver(sock, text_boxes):
         try:
             data = sock.recv(1024).decode()
             if (not data ):
-                print(f"Server: {UNKNOWN_ERROR}")
+                global disconnected
+                disconnected = True
+                print(f"Server: {ConnectionStatus.disconnected.value}")
                 break
             action, payload = data.split(PACKET_SEPARATOR)
             match action:

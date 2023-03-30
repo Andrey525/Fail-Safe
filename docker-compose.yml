@@ -4,7 +4,6 @@ services:
   server:
     build: .
     image: server
-    container_name: server
     tty: true
     ports:
       - 8080:8080
@@ -14,8 +13,12 @@ services:
       - DB_NAME=database
       - DB_HOST=db
       - DB_PORT=5432
+      - MY_PORT=8080
     depends_on:
       - db
+    restart: always
+    volumes:
+      - ./message-dump/message_dump.txt:/server/message_dump.txt
 
   db:
     image: postgres:latest

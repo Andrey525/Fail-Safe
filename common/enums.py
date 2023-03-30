@@ -23,11 +23,6 @@ class AuthStatus(Enum):
     invalid_password = "invalid password"
 
 
-class DBStatus(Enum):
-    user_offline = "user offline"
-    user_online = "user online"
-
-
 PACKET_SEPARATOR = ";"
 PAYLOAD_SEPARATOR = "|"
 PASS_KEY = "baobab"

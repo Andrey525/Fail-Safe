@@ -73,6 +73,13 @@ class Room:
         return status
 
 
+    def get_all_online_users_nicknames(self):
+        nicknames = list()
+        for user in self.__users:
+            nicknames.append(user.nickname)
+        return nicknames
+
+
     def __get_users_count(self):
         self.__lock.acquire()
         count = len(self.__users)
@@ -90,12 +97,15 @@ class Room:
     def __add_message_to_file(self, message: str):
         self.__lock.acquire()
         if (self.__count_lines >= self.__MAX_COUNT_LINES):
-            with open(self.__message_list_file, "r+") as file:
-                messages = file.readlines()[50:]
-                file.truncate(0)
-                print(messages)
-                file.writelines(messages)
-                self.__count_lines = self.__MAX_COUNT_LINES - 50
+            try:
+                with open(self.__message_list_file, "r+") as file:
+                    messages = file.readlines()[50:]
+                    file.truncate(0)
+                    file.writelines(messages)
+                    self.__count_lines = self.__MAX_COUNT_LINES - 50
+            except Exception as e:
+                print(e)
+
         with open(self.__message_list_file, "a+") as file:
             file.write(message + '\n')
             self.__count_lines += 1
@@ -104,9 +114,7 @@ class Room:
 
     # no mutex
     def __send_all_online_members(self):
-        nicknames = list()
-        for user in self.__users:
-            nicknames.append(user.nickname)
+        nicknames = self.get_all_online_users_nicknames()
 
         if (not nicknames):
             return
