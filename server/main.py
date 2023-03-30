@@ -10,7 +10,7 @@ from db import reset_all_statuses
 chat_room = room.Room(max_users_count=2)
 
 
-def handler(sock, address):
+def handler(sock):
     # Регистрация либо вход в существующий аккаунт
     nickname = auth.authorize(sock)
     if (not nickname):
@@ -43,7 +43,7 @@ def main():
         conn_sock, address = sock.accept()
         print("Connection from: " + str(address))
         if (not chat_room.is_full()):
-            thread = threading.Thread(target=handler, args=(conn_sock, address))
+            thread = threading.Thread(target=handler, args=(conn_sock,))
             thread.start()
         else:
             conn_sock.send(", ".join([ConnectionStatus.conn_ref.value, ConnectionStatus.server_full.value]).encode())

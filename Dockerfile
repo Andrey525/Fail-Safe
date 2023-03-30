@@ -9,4 +9,4 @@ ADD server /server/
 ADD common /server/
 WORKDIR /server/
 
-CMD ["python3", "main.py", "db.py", "auth.py", "room.py", "enums.py"]
+CMD ["python3", "main.py"]
