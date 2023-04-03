@@ -1,5 +1,11 @@
 version: '3.9'
 
+networks:
+  internal_network:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
 services:
   server:
     build: .
@@ -7,18 +13,20 @@ services:
     tty: true
     ports:
       - 8080:8080
+    networks:
+      internal_network:
+        ipv4_address: "172.20.0.4"
     environment:
       - DB_USER=admin
       - DB_PASSWORD=password
       - DB_NAME=database
       - DB_HOST=db
       - DB_PORT=5432
-      - MY_PORT=8080
     depends_on:
       - db
     restart: always
     volumes:
-      - ./message-dump/message_dump.txt:/server/message_dump.txt
+      - ./message-dump/:/server/message-dump/
 
   db:
     image: postgres:latest
@@ -29,5 +37,8 @@ services:
       - POSTGRES_DB=database
     ports:
       - 5432:5432
+    networks:
+      internal_network:
+        ipv4_address: "172.20.0.3"
     volumes:
       - ./postgres-db/init.sql:/docker-entrypoint-initdb.d/init.sql

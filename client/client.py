@@ -27,7 +27,8 @@ def clear_frame(frame):
 
 
 def authorize(frame, data: tuple):
-    host = socket.gethostname()
+    # host = socket.gethostname()
+    host = "172.20.0.4"
     port = 8080
     sock = socket.socket()
 
@@ -56,7 +57,7 @@ def authorize(frame, data: tuple):
 
 
 def enter(frame, entry, sock):
-    message = entry.get()
+    message = entry.get()[0:512]
     entry.delete(0, END)
     try:
         if (disconnected):
@@ -78,7 +79,7 @@ def receiver(sock, text_boxes):
     while (not stop_event.is_set()):
         try:
             data = sock.recv(1024).decode()
-            if (not data ):
+            if (not data):
                 global disconnected
                 disconnected = True
                 print(f"Server: {ConnectionStatus.disconnected.value}")
@@ -143,13 +144,16 @@ def login_window(old_frame, action):
     lbl_2.grid(row=2)
     entry_2 = Entry(frame, show="*", font=("Arial", 16))
     entry_2.grid(row=3)
-    btn = Button(frame, text="Confirm", font=("Arial", 16), command= lambda: authorize(frame, [action, entry_1.get(), encrypt(entry_2.get(), PASS_KEY)]))
+    btn = Button(frame, text="Confirm", font=("Arial", 16), command= lambda: authorize(frame, [action, entry_1.get()[0:512], encrypt(entry_2.get()[0:512], PASS_KEY)]))
     btn.grid(row=4)
 
     frame.mainloop()
 
 
 def start_window(window, err: str=None):
+    global disconnected
+    disconnected = False
+
     frame = Frame(window)
     frame.pack()
 

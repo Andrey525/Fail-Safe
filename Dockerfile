@@ -9,4 +9,6 @@ ADD server /server/
 ADD common /server/
 WORKDIR /server/
 
+EXPOSE 8080
+
 CMD ["python3", "main.py"]

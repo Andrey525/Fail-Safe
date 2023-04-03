@@ -12,7 +12,7 @@ class User:
 class Room:
 
     __MAX_COUNT_LINES = 100
-    __message_list_file = "message_dump.txt"
+    __message_list_file = "message-dump/message-dump.txt"
     __count_lines = 0
 
 

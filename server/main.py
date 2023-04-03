@@ -1,4 +1,3 @@
-import os
 import socket
 import threading
 import time
@@ -33,8 +32,10 @@ def handler(sock):
 
 def main():
     print("Starting server")
-    host = socket.gethostname()
-    port = int(os.environ['MY_PORT'])
+    # host = socket.gethostname()
+    host = "172.20.0.4"
+    # host = "lalala" # container restart test
+    port = 8080
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
