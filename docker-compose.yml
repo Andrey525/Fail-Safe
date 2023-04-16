@@ -7,27 +7,6 @@ networks:
         - subnet: 172.20.0.0/24
 
 services:
-  server:
-    build: .
-    image: server
-    tty: true
-    ports:
-      - 8080:8080
-    networks:
-      internal_network:
-        ipv4_address: "172.20.0.4"
-    environment:
-      - DB_USER=admin
-      - DB_PASSWORD=password
-      - DB_NAME=database
-      - DB_HOST=db
-      - DB_PORT=5432
-    depends_on:
-      - db
-    restart: always
-    volumes:
-      - ./message-dump/:/server/message-dump/
-
   db:
     image: postgres:latest
     container_name: db
@@ -42,3 +21,45 @@ services:
         ipv4_address: "172.20.0.3"
     volumes:
       - ./postgres-db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  server1:
+    build: .
+    image: server
+    tty: true
+    ports:
+      - 8080:8080
+    networks:
+      internal_network:
+        ipv4_address: "172.20.0.4"
+    environment:
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=database
+      - DB_HOST=db
+      - DB_PORT=5432
+      - SERVER_IP_ADDR=172.20.0.4
+      - SERVER_PORT=8080
+    depends_on:
+      - db
+    restart: always
+
+  server2:
+    build: .
+    image: server
+    tty: true
+    ports:
+      - 8081:8081
+    networks:
+      internal_network:
+        ipv4_address: "172.20.0.5"
+    environment:
+      - DB_USER=admin
+      - DB_PASSWORD=password
+      - DB_NAME=database
+      - DB_HOST=db
+      - DB_PORT=5432
+      - SERVER_IP_ADDR=172.20.0.5
+      - SERVER_PORT=8081
+    depends_on:
+      - db
+    restart: always

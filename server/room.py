@@ -1,5 +1,6 @@
 import threading
 from enums import *
+import time
 
 
 class User:
@@ -11,9 +12,7 @@ class User:
 
 class Room:
 
-    __MAX_COUNT_LINES = 100
-    __message_list_file = "message-dump/message-dump.txt"
-    __count_lines = 0
+    __messages = list()
 
 
     def __init__(self, max_users_count):
@@ -30,15 +29,15 @@ class Room:
         status = True
         self.__lock.acquire()
         self.__users.append(user)
-
+        self.__lock.release()
         try:
             self.__send_all_online_members()
+            time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
             self.__send_to_user_all_messages(user)
+            time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
         except Exception as e:
             print(e)
             status = False
-
-        self.__lock.release()
         return status
 
 
@@ -46,14 +45,13 @@ class Room:
         status = True
         self.__lock.acquire()
         self.__users.remove(user)
-
+        self.__lock.release()
         try:
             self.__send_all_online_members()
+            time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
         except Exception as e:
             print(e)
             status = False
-
-        self.__lock.release()
         return status
 
 
@@ -65,8 +63,9 @@ class Room:
                 if not data:
                     break
                 message = f"{user.nickname}: {data}"
-                self.__add_message_to_file(message)
-                self.__send_all(";".join([Action.new_message.value, message]).encode())
+                self.__add_message_to_list(message)
+                self.__send_all(";".join([Action.new_message.value, message]))
+                time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
         except Exception as e:
             print(e)
             status = False
@@ -87,56 +86,40 @@ class Room:
         return count
 
 
-    def __send_all(self, data: bytes):
+    def __send_all(self, data: str):
         self.__lock.acquire()
+        print("!!! " + data)
         for user in self.__users:
-            user.sock.send(data)
+            user.sock.send(data.encode())
         self.__lock.release()
 
 
-    def __add_message_to_file(self, message: str):
+    def __add_message_to_list(self, message: str):
         self.__lock.acquire()
-        if (self.__count_lines >= self.__MAX_COUNT_LINES):
-            try:
-                with open(self.__message_list_file, "r+") as file:
-                    messages = file.readlines()[50:]
-                    file.truncate(0)
-                    file.writelines(messages)
-                    self.__count_lines = self.__MAX_COUNT_LINES - 50
-            except Exception as e:
-                print(e)
-
-        with open(self.__message_list_file, "a+") as file:
-            file.write(message + '\n')
-            self.__count_lines += 1
+        self.__messages.append(message)
         self.__lock.release()
 
 
-    # no mutex
     def __send_all_online_members(self):
+        self.__lock.acquire()
         nicknames = self.get_all_online_users_nicknames()
-
+        self.__lock.release()
         if (not nicknames):
             return
-
         data = PAYLOAD_SEPARATOR.join(nicknames)
         data = Action.update_users.value + PACKET_SEPARATOR + data
-
+        print("!! " + data)
         for user in self.__users:
             user.sock.send(data.encode())
 
 
-    # no mutex
     def __send_to_user_all_messages(self, user):
-        try:
-            with open(self.__message_list_file, "r") as file:
-                messages = file.read().split('\n')
-        except:
-            return
-
+        self.__lock.acquire()
+        messages = self.__messages
+        self.__lock.release()
         if (not messages):
             return
-        messages.pop()
         data = PAYLOAD_SEPARATOR.join(messages)
         data = Action.all_messages.value + PACKET_SEPARATOR + data
+        print("! " + data)
         user.sock.send(data.encode())

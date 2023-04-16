@@ -26,39 +26,49 @@ def clear_frame(frame):
        widget.destroy()
 
 
-def authorize(frame, data: tuple):
-    # host = socket.gethostname()
-    host = "172.20.0.4"
-    port = 8080
-    sock = socket.socket()
-
+def authorize(frame, data: tuple, message: str):
     window = frame.master
     frame.destroy()
 
     packet = PACKET_SEPARATOR.join(data)
 
+    sock = socket.socket()
     sock.settimeout(timeout)
     try:
+        host = "172.20.0.4"
+        port = 8080
         sock.connect((host, port))
         sock.send(packet.encode())
         answer = sock.recv(1024).decode()
         if (answer != AuthStatus.success.value):
-            if (not answer):
-                answer = UNKNOWN_ERROR
-            print(f"Server: operation failed, because {answer}")
-            sock.close()
-            start_window(window, answer)
+            raise Exception
     except:
-        print(f"Server: {ConnectionStatus.disconnected.value}")
-        sock.close()
-        start_window(window, ConnectionStatus.disconnected.value)
+        try:
+            host = "172.20.0.5"
+            port = 8081
+            sock = socket.socket()
+            sock.connect((host, port))
+            sock.send(packet.encode())
+            answer = sock.recv(1024).decode()
+            if (answer != AuthStatus.success.value):
+                raise Exception
+        except:
+            print(f"Server: {ConnectionStatus.disconnected.value}")
+            sock.close()
+            start_window(window, ConnectionStatus.disconnected.value)
     finally:
-        chat_window(window, sock)
+        print(f"connect to {host}, {port}")
+        global disconnected
+        disconnected = False
+        chat_window(window, sock, data[1], data[2], message)
 
 
-def enter(frame, entry, sock):
-    message = entry.get()[0:512]
-    entry.delete(0, END)
+def enter(frame, entry, sock, nickname, encrypted_password, last_message):
+    if (last_message):
+        message = last_message
+    else:    
+        message = entry.get()[0:512]
+        entry.delete(0, END)
     try:
         if (disconnected):
             raise Exception("disconnected")
@@ -67,9 +77,7 @@ def enter(frame, entry, sock):
     except:
         print(f"Server: {ConnectionStatus.disconnected.value}")
         sock.close()
-        window = frame.master
-        frame.destroy()
-        start_window(window, ConnectionStatus.disconnected.value)
+        authorize(frame, [Action.login.value, nickname, encrypted_password], message)
 
 
 def receiver(sock, text_boxes):
@@ -84,6 +92,7 @@ def receiver(sock, text_boxes):
                 disconnected = True
                 print(f"Server: {ConnectionStatus.disconnected.value}")
                 break
+            print(data)
             action, payload = data.split(PACKET_SEPARATOR)
             match action:
                 case Action.update_users.value:
@@ -107,9 +116,10 @@ def receiver(sock, text_boxes):
             continue
 
 
-def chat_window(window, sock):
+def chat_window(window, sock, nickname, encrypted_password, message):
     frame = Frame(window)
     frame.pack()
+
 
     lbl = Label(frame, text="Chat Room", font=("Arial", 16))
     lbl.grid(row=0, column=0, pady=20)
@@ -117,7 +127,7 @@ def chat_window(window, sock):
     chat_textbox.grid(row=1, column=0, columnspan=2, padx=5)
     entry = Entry(frame, width=50, font=("Arial", 16))
     entry.grid(row=2, column=0, pady=10)
-    btn = Button(frame, text="Enter", font=("Arial", 16), command= lambda: enter(frame, entry, sock))
+    btn = Button(frame, text="Enter", font=("Arial", 16), command= lambda: enter(frame, entry, sock, nickname, encrypted_password, None))
     btn.grid(row=2, column=1, pady=10)
     lbl_users = Label(frame, text="Online users", font=("Arial", 16))
     lbl_users.grid(row=0, column=2)
@@ -126,6 +136,8 @@ def chat_window(window, sock):
 
     thread = threading.Thread(target=receiver, args=(sock, [chat_textbox, users_textbox]))
     thread.start()
+
+    enter(frame, entry, sock, nickname, encrypted_password, message)
     
     frame.mainloop()
 
@@ -144,7 +156,7 @@ def login_window(old_frame, action):
     lbl_2.grid(row=2)
     entry_2 = Entry(frame, show="*", font=("Arial", 16))
     entry_2.grid(row=3)
-    btn = Button(frame, text="Confirm", font=("Arial", 16), command= lambda: authorize(frame, [action, entry_1.get()[0:512], encrypt(entry_2.get()[0:512], PASS_KEY)]))
+    btn = Button(frame, text="Confirm", font=("Arial", 16), command= lambda: authorize(frame, [action, entry_1.get()[0:512], encrypt(entry_2.get()[0:512], PASS_KEY)], None))
     btn.grid(row=4)
 
     frame.mainloop()

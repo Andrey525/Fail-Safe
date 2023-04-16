@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 import time
@@ -6,7 +7,7 @@ import room
 from enums import *
 
 
-chat_room = room.Room(max_users_count=2)
+chat_room = room.Room(max_users_count=3)
 
 
 def handler(sock):
@@ -32,10 +33,8 @@ def handler(sock):
 
 def main():
     print("Starting server")
-    # host = socket.gethostname()
-    host = "172.20.0.4"
-    # host = "lalala" # container restart test
-    port = 8080
+    host = os.environ['SERVER_IP_ADDR']
+    port = int(os.environ['SERVER_PORT'])
     sock = socket.socket()
     sock.bind((host, port))
     sock.listen(5)
