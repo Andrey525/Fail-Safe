@@ -80,7 +80,7 @@ def enter(frame, entry, sock, nickname, encrypted_password, last_message):
         authorize(frame, [Action.login.value, nickname, encrypted_password], message)
 
 
-def receiver(sock, text_boxes):
+def receiver(frame, entry, sock, text_boxes, nickname, encrypted_password):
     chat_textbox = text_boxes[0]
     users_textbox = text_boxes[1]
     sock.settimeout(timeout)
@@ -91,6 +91,7 @@ def receiver(sock, text_boxes):
                 global disconnected
                 disconnected = True
                 print(f"Server: {ConnectionStatus.disconnected.value}")
+                enter(frame, entry, sock, nickname, encrypted_password, None)
                 break
             print(data)
             action, payload = data.split(PACKET_SEPARATOR)
@@ -120,7 +121,6 @@ def chat_window(window, sock, nickname, encrypted_password, message):
     frame = Frame(window)
     frame.pack()
 
-
     lbl = Label(frame, text="Chat Room", font=("Arial", 16))
     lbl.grid(row=0, column=0, pady=20)
     chat_textbox = Text(frame, width=60, font=("Arial", 16), state=DISABLED)
@@ -134,7 +134,7 @@ def chat_window(window, sock, nickname, encrypted_password, message):
     users_textbox = Text(frame, width=20, font=("Arial", 16), state=DISABLED)
     users_textbox.grid(row=1, column=2, padx=5)
 
-    thread = threading.Thread(target=receiver, args=(sock, [chat_textbox, users_textbox]))
+    thread = threading.Thread(target=receiver, args=(frame, entry, sock, [chat_textbox, users_textbox], nickname, encrypted_password))
     thread.start()
 
     enter(frame, entry, sock, nickname, encrypted_password, message)
