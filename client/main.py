@@ -1,19 +1,8 @@
-import sys
-from tkinter import *
-
-sys.path.insert(0, "/home/andrey/Рабочий стол/Institute/4_kurs/Fail-Safe/common")
-from enums import *
-from enums import PACKET_SEPARATOR
 from client import *
 
 
 def main():
-    window = Tk()
-    window.title("Chat client")
-    window.geometry('1024x768')
-    window.protocol("WM_DELETE_WINDOW", lambda: stop(window))
-    start_window(window)
-    window.mainloop()
+    start_phase()
 
 
 if __name__ == '__main__':

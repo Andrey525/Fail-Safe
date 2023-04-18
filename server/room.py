@@ -10,6 +10,13 @@ class User:
         self.sock = pair[1]
 
 
+class Server:
+
+    def __init__(self, pair: tuple):
+        self.dislocation = pair[0]
+        self.sock = pair[1]
+
+
 class Room:
 
     __messages = list()
@@ -19,6 +26,7 @@ class Room:
         self.__lock = threading.Lock()
         self.__max_users_count = max_users_count
         self.__users = list()
+        self.__servers = list()
 
 
     def is_full(self):
@@ -40,6 +48,17 @@ class Room:
             status = False
         return status
 
+
+    def add_server(self, server: Server):
+        self.__lock.acquire()
+        self.__servers.append(server)
+        self.__lock.release()
+
+
+    def remove_server(self, server: Server):
+        self.__lock.acquire()
+        self.__servers.remove(server)
+        self.__lock.release()
 
     def remove_user(self, user: User) -> bool:
         status = True
@@ -63,7 +82,7 @@ class Room:
                 if not data:
                     break
                 message = f"{user.nickname}: {data}"
-                self.__add_message_to_list(message)
+                self.add_message_to_list(message)
                 self.__send_all(";".join([Action.new_message.value, message]))
                 time.sleep(0.1) # Костыль Чтоб в сокет смешанные данные не пришли TODO
         except Exception as e:
@@ -79,6 +98,12 @@ class Room:
         return nicknames
 
 
+    def add_message_to_list(self, message: str):
+        self.__lock.acquire()
+        self.__messages.append(message)
+        self.__lock.release()
+
+
     def __get_users_count(self):
         self.__lock.acquire()
         count = len(self.__users)
@@ -91,12 +116,8 @@ class Room:
         print("!!! " + data)
         for user in self.__users:
             user.sock.send(data.encode())
-        self.__lock.release()
-
-
-    def __add_message_to_list(self, message: str):
-        self.__lock.acquire()
-        self.__messages.append(message)
+        for server in self.__servers:
+            server.sock.send(data.encode())
         self.__lock.release()
 
 
@@ -109,8 +130,12 @@ class Room:
         data = PAYLOAD_SEPARATOR.join(nicknames)
         data = Action.update_users.value + PACKET_SEPARATOR + data
         print("!! " + data)
+        self.__lock.acquire()
         for user in self.__users:
             user.sock.send(data.encode())
+        for server in self.__servers:
+            server.sock.send(data.encode())
+        self.__lock.release()
 
 
     def __send_to_user_all_messages(self, user):
