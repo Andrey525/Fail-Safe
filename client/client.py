@@ -4,7 +4,7 @@ import threading
 from getpass import getpass
 from cryptocode import encrypt
 
-sys.path.insert(0, "/home/andrey/Рабочий стол/Institute/4_kurs/Fail-Safe/common")
+sys.path.insert(0, "/home/andrey/Fail-Safe/common")
 from enums import *
 
 
@@ -98,6 +98,7 @@ def authorize_phase(action, nickname, password):
         chat_phase(sock)
         sock.close()
         print("reconnection...")
+        packet = PACKET_SEPARATOR.join([Action.login.value, nickname, encrypt(password, PASS_KEY)])
 
 
 def login_phase(action):
